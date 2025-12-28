@@ -1831,7 +1831,9 @@ class ConsumerNotebookLMClient:
         body = self._build_request_body(self.RPC_IMPORT_RESEARCH, params)
         url = self._build_url(self.RPC_IMPORT_RESEARCH, f"/notebook/{notebook_id}")
 
-        response = client.post(url, content=body)
+        # Import can take a long time when fetching multiple web sources
+        # Use 120s timeout instead of the default 30s
+        response = client.post(url, content=body, timeout=120.0)
         response.raise_for_status()
 
         parsed = self._parse_response(response.text)
