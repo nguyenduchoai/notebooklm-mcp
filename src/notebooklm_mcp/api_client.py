@@ -944,8 +944,18 @@ class NotebookLMClient:
     """
         client = self._get_client()
 
-        # URL source params structure:
-        source_data = [None, None, [url], None, None, None, None, None, None, None, 1]
+        # URL position differs for YouTube vs regular websites:
+        # - YouTube: position 7
+        # - Regular websites: position 2
+        is_youtube = "youtube.com" in url.lower() or "youtu.be" in url.lower()
+
+        if is_youtube:
+            # YouTube: [null, null, null, null, null, null, null, [url], null, null, 1]
+            source_data = [None, None, None, None, None, None, None, [url], None, None, 1]
+        else:
+            # Regular website: [null, null, [url], null, null, null, null, null, null, null, 1]
+            source_data = [None, None, [url], None, None, None, None, None, None, None, 1]
+
         params = [
             [source_data],
             notebook_id,

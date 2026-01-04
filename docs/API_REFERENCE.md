@@ -307,16 +307,36 @@ Configures the notebook's chat behavior - goal/style and response length.
 All source types use the same RPC but with different param structures:
 
 ### URL/YouTube Source
+
+**IMPORTANT:** YouTube and regular web URLs use **different positions** in the source_data array!
+
+#### Regular Website URL
 ```python
 source_data = [
     None,
     None,
-    [url],  # URL at position 2
+    [url],  # URL at position 2 for regular websites
     None, None, None, None, None, None, None,
     1
 ]
 params = [[[source_data]], notebook_id, [2], settings]
 ```
+
+#### YouTube URL
+```python
+source_data = [
+    None,
+    None,
+    None,  # Position 2 must be None for YouTube
+    None, None, None, None,
+    [url],  # URL at position 7 for YouTube
+    None, None,
+    1
+]
+params = [[[source_data]], notebook_id, [2], settings]
+```
+
+**Detection:** Check if URL contains `youtube.com` or `youtu.be` to determine which format to use.
 
 ### Pasted Text Source
 ```python
