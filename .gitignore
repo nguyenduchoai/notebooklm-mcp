@@ -40,6 +40,9 @@ htmlcov/
 .DS_Store
 *.log
 
+# Credentials
+cookies.txt
+
 # uv
 .uv/
 uv.lock
