@@ -329,7 +329,7 @@ def notebook_add_drive(
 def notebook_query(
     notebook_id: str,
     query: str,
-    source_ids: list[str] | None = None,
+    source_ids: list[str] | str | None = None,
     conversation_id: str | None = None,
 ) -> dict[str, Any]:
     """Ask AI about EXISTING sources already in notebook. NOT for finding new sources.
@@ -343,6 +343,15 @@ def notebook_query(
         conversation_id: For follow-up questions
     """
     try:
+        # Handle AI clients that send source_ids as a JSON string instead of a list
+        if isinstance(source_ids, str):
+            import json
+            try:
+                source_ids = json.loads(source_ids)
+            except json.JSONDecodeError:
+                # If not valid JSON, treat as a single source ID
+                source_ids = [source_ids]
+
         client = get_client()
         result = client.query(
             notebook_id,
