@@ -10,6 +10,39 @@
 
 ---
 
+## EXECUTION PROGRESS (2026-01-27)
+
+**Status:** Tasks 1-5 Complete (with optimizations) | Remaining: Tasks 6-11
+
+**Completed Tasks:**
+- ✅ Task 1: RPC constant added (commit: 6e73536)
+- ✅ Task 2: Content extraction helpers with robust error handling (commit: a26478d)
+- ✅ Task 3: Format helpers (markdown, JSON normalization) (commit: b82d247)
+- ✅ Task 4-5: Download methods with optimizations (commit: 2260372)
+
+**Optimizations Applied:**
+- Added defensive API response parsing with detailed logging
+- Multi-pattern HTML extraction (data-app-data, script tags, fallback patterns)
+- Refactored to shared `_download_interactive_artifact()` method (eliminated ~80 lines duplication)
+- Better error messages with context for debugging
+- Comprehensive logging throughout extraction pipeline
+
+**Next Steps:**
+1. Task 6: Add MCP server tools (download_quiz, download_flashcards)
+2. Task 7: Add CLI commands with format options
+3. Task 8: Update CLAUDE.md and GEMINI.md documentation
+4. Task 9: Integration testing with real notebook artifacts
+5. Task 10: Update project status (todo.md, PROJECT_RECAP.md)
+6. Task 11: Final commit and push
+
+**Important Notes:**
+- Client methods are now `async` and use shared implementation
+- All format validation happens in shared method
+- Test files created: test_extraction.py, test_formatting.py (can be removed after testing)
+- Branch: feature/unified-notebooklm-tools
+
+---
+
 ## Task 1: Add RPC Constant for Interactive HTML
 
 **Files:**
