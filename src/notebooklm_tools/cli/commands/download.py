@@ -1,10 +1,16 @@
 import asyncio
 import typer
-from typing import Optional
+from typing import Optional, Callable
 from pathlib import Path
 from rich.console import Console
-from rich.spinner import Spinner
-from rich.live import Live
+from rich.progress import (
+    Progress,
+    TextColumn,
+    BarColumn,
+    DownloadColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn,
+)
 from notebooklm_tools.core.client import NotebookLMClient, ArtifactNotReadyError, ArtifactError
 from notebooklm_tools.cli.utils import get_client, handle_error
 
@@ -12,45 +18,59 @@ app = typer.Typer(help="Download artifacts from notebooks.")
 console = Console()
 
 
-def download_with_spinner(
-    download_func,
+def download_with_progress(
+    download_func: Callable[[Callable[[int, int], None]], Any],
     description: str,
-    show_spinner: bool = True
+    show_progress: bool = True,
 ):
-    """Wrapper to show spinner for downloads.
+    """Wrapper to show progress bar for downloads.
 
     Args:
-        download_func: Function that performs the download (should return path)
+        download_func: Function that takes a progress callback and returns result
         description: Description to show
-        show_spinner: Whether to show spinner
+        show_progress: Whether to show progress bar
 
     Returns:
-        Path to downloaded file
+        Result of download_func
     """
-    if not show_spinner:
-        return download_func()
+    if not show_progress:
+        return download_func(lambda current, total: None)
 
-    spinner = Spinner("dots", text=description)
-    with Live(spinner, console=console, transient=True):
-        result = download_func()
+    with Progress(
+        TextColumn("[bold blue]{task.description}"),
+        BarColumn(bar_width=None),
+        "[progress.percentage]{task.percentage:>3.0f}%",
+        DownloadColumn(),
+        TransferSpeedColumn(),
+        TimeRemainingColumn(),
+        console=console,
+        transient=True,
+    ) as progress:
+        task_id = progress.add_task(description, total=None)
 
-    return result
+        def update_progress(current: int, total: int | None):
+            if total:
+                progress.update(task_id, completed=current, total=total)
+            else:
+                progress.update(task_id, completed=current)
+
+        return download_func(update_progress)
 
 @app.command("audio")
 def download_audio(
     notebook_id: str = typer.Argument(..., help="Notebook ID"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output path (default: ./{notebook_id}_audio.m4a)"),
     artifact_id: Optional[str] = typer.Option(None, "--id", help="Specific artifact ID"),
-    no_spinner: bool = typer.Option(False, "--no-spinner", help="Disable download spinner")
+    no_progress: bool = typer.Option(False, "--no-progress", help="Disable download progress bar")
 ):
     """Download Audio Overview."""
     client = get_client()
     try:
         path = output or f"{notebook_id}_audio.m4a"
-        saved = download_with_spinner(
-            lambda: asyncio.run(client.download_audio(notebook_id, path, artifact_id)),
-            "Downloading audio overview...",
-            show_spinner=not no_spinner
+        saved = download_with_progress(
+            lambda cb: asyncio.run(client.download_audio(notebook_id, path, artifact_id, progress_callback=cb)),
+            "Downloading audio",
+            show_progress=not no_progress
         )
         console.print(f"[green]✓[/green] Downloaded audio to: {saved}")
     except ArtifactNotReadyError:
@@ -64,16 +84,16 @@ def download_video(
     notebook_id: str = typer.Argument(..., help="Notebook ID"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output path (default: ./{notebook_id}_video.mp4)"),
     artifact_id: Optional[str] = typer.Option(None, "--id", help="Specific artifact ID"),
-    no_spinner: bool = typer.Option(False, "--no-spinner", help="Disable download spinner")
+    no_progress: bool = typer.Option(False, "--no-progress", help="Disable download progress bar")
 ):
     """Download Video Overview."""
     client = get_client()
     try:
         path = output or f"{notebook_id}_video.mp4"
-        saved = download_with_spinner(
-            lambda: asyncio.run(client.download_video(notebook_id, path, artifact_id)),
-            "Downloading video overview...",
-            show_spinner=not no_spinner
+        saved = download_with_progress(
+            lambda cb: asyncio.run(client.download_video(notebook_id, path, artifact_id, progress_callback=cb)),
+            "Downloading video",
+            show_progress=not no_progress
         )
         console.print(f"[green]✓[/green] Downloaded video to: {saved}")
     except ArtifactNotReadyError:
@@ -123,16 +143,16 @@ def download_slide_deck(
     notebook_id: str = typer.Argument(..., help="Notebook ID"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output path (default: ./{notebook_id}_slides.pdf)"),
     artifact_id: Optional[str] = typer.Option(None, "--id", help="Specific artifact ID"),
-    no_spinner: bool = typer.Option(False, "--no-spinner", help="Disable download spinner")
+    no_progress: bool = typer.Option(False, "--no-progress", help="Disable download progress bar")
 ):
     """Download Slide Deck (PDF)."""
     client = get_client()
     try:
         path = output or f"{notebook_id}_slides.pdf"
-        saved = download_with_spinner(
-            lambda: asyncio.run(client.download_slide_deck(notebook_id, path, artifact_id)),
-            "Downloading slide deck...",
-            show_spinner=not no_spinner
+        saved = download_with_progress(
+            lambda cb: asyncio.run(client.download_slide_deck(notebook_id, path, artifact_id, progress_callback=cb)),
+            "Downloading slide deck",
+            show_progress=not no_progress
         )
         console.print(f"[green]✓[/green] Downloaded slide deck to: {saved}")
     except ArtifactNotReadyError:
@@ -146,16 +166,16 @@ def download_infographic(
     notebook_id: str = typer.Argument(..., help="Notebook ID"),
     output: Optional[str] = typer.Option(None, "--output", "-o", help="Output path (default: ./{notebook_id}_infographic.png)"),
     artifact_id: Optional[str] = typer.Option(None, "--id", help="Specific artifact ID"),
-    no_spinner: bool = typer.Option(False, "--no-spinner", help="Disable download spinner")
+    no_progress: bool = typer.Option(False, "--no-progress", help="Disable download progress bar")
 ):
     """Download Infographic (PNG)."""
     client = get_client()
     try:
         path = output or f"{notebook_id}_infographic.png"
-        saved = download_with_spinner(
-            lambda: asyncio.run(client.download_infographic(notebook_id, path, artifact_id)),
-            "Downloading infographic...",
-            show_spinner=not no_spinner
+        saved = download_with_progress(
+            lambda cb: asyncio.run(client.download_infographic(notebook_id, path, artifact_id, progress_callback=cb)),
+            "Downloading infographic",
+            show_progress=not no_progress
         )
         console.print(f"[green]✓[/green] Downloaded infographic to: {saved}")
     except ArtifactNotReadyError:

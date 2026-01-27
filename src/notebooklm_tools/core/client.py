@@ -1737,7 +1737,11 @@ class NotebookLMClient:
         return []
 
     async def download_audio(
-        self, notebook_id: str, output_path: str, artifact_id: str | None = None
+        self,
+        notebook_id: str,
+        output_path: str,
+        artifact_id: str | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """Download an Audio Overview to a file.
 
@@ -1745,6 +1749,7 @@ class NotebookLMClient:
             notebook_id: The notebook ID.
             output_path: Path to save the audio file (MP4/MP3).
             artifact_id: Specific artifact ID, or uses first completed audio.
+            progress_callback: Optional callback(bytes_downloaded, total_bytes).
 
         Returns:
             The output path.
@@ -1795,13 +1800,17 @@ class NotebookLMClient:
             if not url:
                 raise ArtifactDownloadError("audio", details="No download URL found")
 
-            return await self._download_url(url, output_path)
+            return await self._download_url(url, output_path, progress_callback)
 
         except (IndexError, TypeError, AttributeError) as e:
             raise ArtifactParseError("audio", details=str(e)) from e
 
     async def download_video(
-        self, notebook_id: str, output_path: str, artifact_id: str | None = None
+        self,
+        notebook_id: str,
+        output_path: str,
+        artifact_id: str | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """Download a Video Overview to a file.
 
@@ -1809,6 +1818,7 @@ class NotebookLMClient:
             notebook_id: The notebook ID.
             output_path: Path to save the video file (MP4).
             artifact_id: Specific artifact ID, or uses first completed video.
+            progress_callback: Optional callback(bytes_downloaded, total_bytes).
 
         Returns:
             The output path.
@@ -1867,7 +1877,7 @@ class NotebookLMClient:
             if not url:
                 raise ArtifactDownloadError("video", details="No download URL found")
 
-            return await self._download_url(url, output_path)
+            return await self._download_url(url, output_path, progress_callback)
 
         except (IndexError, TypeError, AttributeError) as e:
             raise ArtifactParseError("video", details=str(e)) from e
@@ -3375,14 +3385,19 @@ class NotebookLMClient:
 
 
     async def download_infographic(
-        self, notebook_id: str, output_path: str, artifact_id: str | None = None
+        self,
+        notebook_id: str,
+        output_path: str,
+        artifact_id: str | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
         """Download an Infographic to a file.
 
         Args:
             notebook_id: The notebook ID.
-            output_path: Path to save the image file (PNG).
+            output_path: Path to save the PNG file.
             artifact_id: Specific artifact ID, or uses first completed infographic.
+            progress_callback: Optional callback(bytes_downloaded, total_bytes).
 
         Returns:
             The output path.
@@ -3392,9 +3407,9 @@ class NotebookLMClient:
         # Filter for completed infographics (Type 7, Status 3)
         candidates = []
         for a in artifacts:
-            if isinstance(a, list) and len(a) > 4:
+            if isinstance(a, list) and len(a) > 5:
                 if a[2] == self.STUDIO_TYPE_INFOGRAPHIC and a[4] == 3:
-                     candidates.append(a)
+                    candidates.append(a)
 
         if not candidates:
             raise ArtifactNotReadyError("infographic")
@@ -3403,79 +3418,81 @@ class NotebookLMClient:
         if artifact_id:
             target = next((a for a in candidates if a[0] == artifact_id), None)
             if not target:
-                 raise ArtifactNotReadyError("infographic", artifact_id)
+                raise ArtifactNotReadyError("infographic", artifact_id)
         else:
             target = candidates[0]
 
-        # Extract URL from metadata logic
+        # Extract URL from metadata[5][0][0]
         try:
-            metadata = None
-            if len(target) > 14:
-                options = target[14]
-                if isinstance(options, list) and len(options) > 2:
-                    img_data = options[2]
-                    if (isinstance(img_data, list) and len(img_data) > 0 and
-                        isinstance(img_data[0], list) and len(img_data[0]) > 1):
-                        possible_url = img_data[0][1]
-                        if isinstance(possible_url, list) and len(possible_url) > 0:
-                            url = possible_url[0]
-                            if isinstance(url, str) and url.startswith("http"):
-                                return await self._download_url(url, output_path)
+            metadata = target[5]
+            if not isinstance(metadata, list) or len(metadata) == 0:
+                raise ArtifactParseError("infographic", details="Invalid metadata structure")
 
-            raise ArtifactDownloadError("infographic", details="Could not find image URL in metadata")
+            media_list = metadata[0]
+            if not isinstance(media_list, list) or len(media_list) == 0:
+                raise ArtifactParseError("infographic", details="No media URLs found in metadata")
 
-        except (IndexError, TypeError, AttributeError) as e:
-            raise ArtifactParseError("infographic", details=str(e)) from e
+            url = media_list[0][0] if isinstance(media_list[0], list) else None
+            if not url:
+                raise ArtifactDownloadError("infographic", details="No download URL found")
+
+            return await self._download_url(url, output_path, progress_callback)
+
 
     async def download_slide_deck(
-        self, notebook_id: str, output_path: str, artifact_id: str | None = None
+        self,
+        notebook_id: str,
+        output_path: str,
+        artifact_id: str | None = None,
+        progress_callback: Callable[[int, int], None] | None = None,
     ) -> str:
-        """Download a slide deck as a PDF file.
+        """Download a Slide Deck to a file (PDF).
 
         Args:
             notebook_id: The notebook ID.
             output_path: Path to save the PDF file.
             artifact_id: Specific artifact ID, or uses first completed slide deck.
+            progress_callback: Optional callback(bytes_downloaded, total_bytes).
 
         Returns:
             The output path.
         """
         artifacts = self._list_raw(notebook_id)
 
-        # Filter for completed slide deck (Type 8, Status 3)
+        # Filter for completed slide decks (Type 8, Status 3)
         candidates = []
         for a in artifacts:
-            if isinstance(a, list) and len(a) > 4:
+            if isinstance(a, list) and len(a) > 5:
                 if a[2] == self.STUDIO_TYPE_SLIDE_DECK and a[4] == 3:
-                     candidates.append(a)
+                    candidates.append(a)
 
         if not candidates:
             raise ArtifactNotReadyError("slide_deck")
 
         target = None
         if artifact_id:
-             target = next((a for a in candidates if a[0] == artifact_id), None)
-             if not target:
-                 raise ArtifactNotReadyError("slide_deck", artifact_id)
+            target = next((a for a in candidates if a[0] == artifact_id), None)
+            if not target:
+                raise ArtifactNotReadyError("slide_deck", artifact_id)
         else:
             target = candidates[0]
 
-        # Extract PDF URL from metadata at index 16, position 3
+        # Extract PDF URL from metadata[12][0][1] (contribution.usercontent.google.com)
         try:
-            if len(target) <= 16:
-                 raise ArtifactParseError("slide_deck", details="Missing metadata at index 16")
+            metadata = target[12]
+            if not isinstance(metadata, list) or len(metadata) == 0:
+                raise ArtifactParseError("slide_deck", details="Invalid metadata structure")
 
-            # [config, title, slides_list, pdf_url]
-            metadata = target[16]
-            if isinstance(metadata, list) and len(metadata) > 3:
-                pdf_url = metadata[3]
-                if isinstance(pdf_url, str) and pdf_url.startswith("http"):
-                     return await self._download_url(pdf_url, output_path)
+            media_list = metadata[0]
+            if not isinstance(media_list, list) or len(media_list) < 2:
+                raise ArtifactParseError("slide_deck", details="No media URLs found in metadata")
 
-            raise ArtifactDownloadError("slide_deck", details="Could not find PDF URL")
+            pdf_url = media_list[1]
+            if not pdf_url or not isinstance(pdf_url, str):
+                raise ArtifactDownloadError("slide_deck", details="No download URL found")
 
-        except (IndexError, TypeError, AttributeError) as e:
-            raise ArtifactParseError("slide_deck", details=str(e)) from e
+            return await self._download_url(pdf_url, output_path, progress_callback)
+
         
     def download_report(
         self,

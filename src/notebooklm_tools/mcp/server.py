@@ -747,7 +747,9 @@ async def download_audio(
     """
     try:
         client = get_client()
-        saved_path = await client.download_audio(notebook_id, output_path, artifact_id)
+        saved_path = await client.download_audio(
+            notebook_id, output_path, artifact_id, progress_callback=None
+        )
         return {
             "status": "success",
             "path": saved_path,
@@ -771,7 +773,9 @@ async def download_video(
     """
     try:
         client = get_client()
-        saved_path = await client.download_video(notebook_id, output_path, artifact_id)
+        saved_path = await client.download_video(
+            notebook_id, output_path, artifact_id, progress_callback=None
+        )
         return {
             "status": "success",
             "path": saved_path,
@@ -843,7 +847,9 @@ async def download_slide_deck(
     """
     try:
         client = get_client()
-        saved_path = await client.download_slide_deck(notebook_id, output_path, artifact_id)
+        saved_path = await client.download_slide_deck(
+            notebook_id, output_path, artifact_id, progress_callback=None
+        )
         return {
             "status": "success",
             "path": saved_path,
@@ -867,7 +873,9 @@ async def download_infographic(
     """
     try:
         client = get_client()
-        saved_path = await client.download_infographic(notebook_id, output_path, artifact_id)
+        saved_path = await client.download_infographic(
+            notebook_id, output_path, artifact_id, progress_callback=None
+        )
         return {
             "status": "success",
             "path": saved_path,
