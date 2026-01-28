@@ -56,6 +56,12 @@ Then use natural language: *"Create a notebook about quantum computing and gener
 | Share notebook | `nlm share public/invite` | `notebook_share_*` |
 | Sync Drive sources | `nlm source sync` | `source_sync_drive` |
 
+📚 **More Documentation:**
+- **[CLI Guide](docs/CLI_GUIDE.md)** — Complete command reference
+- **[MCP Guide](docs/MCP_GUIDE.md)** — All 31 MCP tools with examples
+- **[Authentication](docs/AUTHENTICATION.md)** — Setup and troubleshooting
+- **[API Reference](docs/API_REFERENCE.md)** — Internal API docs for contributors
+
 ## Important Disclaimer
 
 This MCP uses **internal APIs** that:
@@ -189,7 +195,7 @@ For detailed instructions and troubleshooting, see **[docs/AUTHENTICATION.md](do
 
 ## MCP Configuration
 
-> **⚠️ Context Window Warning:** This MCP provides **26 tools** which consume a significant portion of your context window. It's recommended to **disable the MCP when not actively using NotebookLM** to preserve context for your other work. In Claude Code, use `@notebooklm-mcp` to toggle it on/off, or use `/mcp` command.
+> **⚠️ Context Window Warning:** This MCP provides **31 tools** which consume a significant portion of your context window. It's recommended to **disable the MCP when not actively using NotebookLM** to preserve context for your other work. In Claude Code, use `@notebooklm-mcp` to toggle it on/off, or use `/mcp` command.
  
 ### CLI Options
 
@@ -336,7 +342,7 @@ Restart Gemini CLI after editing.
 
 ### Managing Context Window Usage
 
-Since this MCP has 31 tools, it's good practice to disable it when not in use:
+Since this MCP has **31 tools**, it's good practice to disable it when not in use:
 
 **Claude Code:**
 ```bash
