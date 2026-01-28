@@ -13,6 +13,7 @@ Tool Modules:
 - studio.py: Artifact creation with consolidated studio_create
 - downloads.py: Artifact downloads with consolidated download_artifact
 - chat.py: Query and conversation management
+- exports.py: Export artifacts to Google Docs/Sheets
 """
 
 import argparse
@@ -69,6 +70,7 @@ def _register_tools():
         research,
         studio,
         chat,
+        exports,
     )
     
     # Register collected tools with mcp

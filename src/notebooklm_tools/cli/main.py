@@ -27,6 +27,7 @@ from notebooklm_tools.cli.commands.studio import (
 )
 from notebooklm_tools.cli.commands.download import app as download_app
 from notebooklm_tools.cli.commands.share import app as share_app
+from notebooklm_tools.cli.commands.export import app as export_app
 from notebooklm_tools.cli.commands.verbs import (
     create_app,
     list_app,
@@ -67,6 +68,7 @@ app.add_typer(alias_app, name="alias", help="Manage ID aliases")
 app.add_typer(config_app, name="config", help="Manage configuration")
 app.add_typer(download_app, name="download", help="Download artifacts (audio, video, etc)")
 app.add_typer(share_app, name="share", help="Manage notebook sharing")
+app.add_typer(export_app, name="export", help="Export artifacts to Google Docs/Sheets")
 
 # Generation commands as top-level
 app.add_typer(audio_app, name="audio", help="Create audio overviews")

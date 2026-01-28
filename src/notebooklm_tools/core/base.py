@@ -102,6 +102,9 @@ class BaseClient:
     RPC_SHARE_NOTEBOOK = "QDyure"    # Set sharing settings (visibility, collaborators)
     RPC_GET_SHARE_STATUS = "JFMDGd"  # Get current share status
 
+    # Export RPCs
+    RPC_EXPORT_ARTIFACT = "Krh3pd"   # Export to Google Docs/Sheets
+
     # =========================================================================
     # API Constants (re-exported from constants module)
     # =========================================================================
@@ -198,6 +201,10 @@ class BaseClient:
     SHARE_ROLE_VIEWER = constants.SHARE_ROLE_VIEWER
     SHARE_ACCESS_RESTRICTED = constants.SHARE_ACCESS_RESTRICTED
     SHARE_ACCESS_PUBLIC = constants.SHARE_ACCESS_PUBLIC
+
+    # Export types
+    EXPORT_TYPE_DOCS = constants.EXPORT_TYPE_DOCS
+    EXPORT_TYPE_SHEETS = constants.EXPORT_TYPE_SHEETS
 
     # Query endpoint (different from batchexecute - streaming gRPC-style)
     QUERY_ENDPOINT = "/_/LabsTailwindUi/data/google.internal.labs.tailwind.orchestration.v1.LabsTailwindOrchestrationService/GenerateFreeFormStreamed"

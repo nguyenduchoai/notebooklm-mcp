@@ -329,3 +329,14 @@ SHARE_ACCESS_LEVELS = CodeMapper({
     "restricted": SHARE_ACCESS_RESTRICTED,
     "public": SHARE_ACCESS_PUBLIC,
 })
+
+# =============================================================================
+# Export Types (Google Workspace)
+# =============================================================================
+EXPORT_TYPE_DOCS = 1
+EXPORT_TYPE_SHEETS = 2
+
+EXPORT_TYPES = CodeMapper({
+    "docs": EXPORT_TYPE_DOCS,
+    "sheets": EXPORT_TYPE_SHEETS,
+})

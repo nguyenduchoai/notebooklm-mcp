@@ -38,6 +38,9 @@ from .chat import (
     notebook_query,
     chat_configure,
 )
+from .exports import (
+    export_artifact,
+)
 
 __all__ = [
     # Downloads (1 consolidated)
@@ -74,4 +77,7 @@ __all__ = [
     # Chat (2)
     "notebook_query",
     "chat_configure",
+    # Exports (1)
+    "export_artifact",
 ]
+

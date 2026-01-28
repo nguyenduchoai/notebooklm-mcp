@@ -26,6 +26,7 @@ from .research import ResearchMixin
 from .sharing import SharingMixin
 from .sources import SourceMixin
 from .studio import StudioMixin
+from .exports import ExportMixin
 
 
 # Import utility functions from utils module
@@ -68,7 +69,7 @@ OWNERSHIP_MINE = constants.OWNERSHIP_MINE
 OWNERSHIP_SHARED = constants.OWNERSHIP_SHARED
 
 
-class NotebookLMClient(DownloadMixin, StudioMixin, ResearchMixin, ConversationMixin, SourceMixin, SharingMixin, NotebookMixin):
+class NotebookLMClient(ExportMixin, DownloadMixin, StudioMixin, ResearchMixin, ConversationMixin, SourceMixin, SharingMixin, NotebookMixin):
     """Client for NotebookLM MCP internal API.
     
     This class extends BaseClient with all domain-specific operations:
