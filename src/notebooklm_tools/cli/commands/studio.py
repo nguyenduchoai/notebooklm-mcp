@@ -6,6 +6,7 @@ import typer
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
+from notebooklm_tools.core import constants
 from notebooklm_tools.core.alias import get_alias_manager
 from notebooklm_tools.core.exceptions import NLMError
 from notebooklm_tools.cli.formatters import detect_output_format, get_formatter
@@ -162,6 +163,19 @@ def create_audio(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+
+        # Convert string parameters to integer codes
+        try:
+            format_code = constants.AUDIO_FORMATS.get_code(format)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+        try:
+            length_code = constants.AUDIO_LENGTHS.get_code(length)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -171,8 +185,8 @@ def create_audio(
             with get_client(profile) as client:
                 result = client.create_audio_overview(
                     notebook_id,
-                    format=format,
-                    length=length,
+                    format_code=format_code,
+                    length_code=length_code,
                     language=language,
                     focus_prompt=focus,
                     source_ids=parse_source_ids(source_ids),
@@ -299,6 +313,14 @@ def create_flashcards(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+
+        # Convert string parameters to integer codes
+        try:
+            difficulty_code = constants.FLASHCARD_DIFFICULTIES.get_code(difficulty)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -308,7 +330,7 @@ def create_flashcards(
             with get_client(profile) as client:
                 result = client.create_flashcards(
                     notebook_id,
-                    difficulty=difficulty,
+                    difficulty_code=difficulty_code,
                     source_ids=parse_source_ids(source_ids),
                 )
         
@@ -339,6 +361,8 @@ def create_mindmap(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+        parsed_source_ids = parse_source_ids(source_ids)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -348,15 +372,15 @@ def create_mindmap(
             with get_client(profile) as client:
                 # Two-step process: generate then save
                 gen_result = client.generate_mind_map(
-                    notebook_id,
-                    source_ids=parse_source_ids(source_ids),
+                    source_ids=parsed_source_ids,
                 )
-                
-                # Check if generation was successful and we have a response to save
-                if gen_result and 'response' in gen_result:
+
+                # Check if generation was successful and we have mind_map_json to save
+                if gen_result and 'mind_map_json' in gen_result:
                     result = client.save_mind_map(
                         notebook_id,
-                        gen_result['response'],
+                        gen_result['mind_map_json'],
+                        source_ids=parsed_source_ids,
                         title=title if title else "Mind Map",
                     )
                 else:
@@ -395,6 +419,19 @@ def create_slides(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+
+        # Convert string parameters to integer codes
+        try:
+            format_code = constants.SLIDE_DECK_FORMATS.get_code(format)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+        try:
+            length_code = constants.SLIDE_DECK_LENGTHS.get_code(length)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -404,8 +441,8 @@ def create_slides(
             with get_client(profile) as client:
                 result = client.create_slide_deck(
                     notebook_id,
-                    format=format,
-                    length=length,
+                    format_code=format_code,
+                    length_code=length_code,
                     language=language,
                     focus_prompt=focus,
                     source_ids=parse_source_ids(source_ids),
@@ -441,6 +478,19 @@ def create_infographic(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+
+        # Convert string parameters to integer codes
+        try:
+            orientation_code = constants.INFOGRAPHIC_ORIENTATIONS.get_code(orientation)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+        try:
+            detail_code = constants.INFOGRAPHIC_DETAILS.get_code(detail)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -450,8 +500,8 @@ def create_infographic(
             with get_client(profile) as client:
                 result = client.create_infographic(
                     notebook_id,
-                    orientation=orientation,
-                    detail_level=detail,
+                    orientation_code=orientation_code,
+                    detail_level_code=detail_code,
                     language=language,
                     focus_prompt=focus,
                     source_ids=parse_source_ids(source_ids),
@@ -490,6 +540,19 @@ def create_video(
     
     try:
         notebook_id = get_alias_manager().resolve(notebook_id)
+
+        # Convert string parameters to integer codes
+        try:
+            format_code = constants.VIDEO_FORMATS.get_code(format)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+        try:
+            style_code = constants.VIDEO_STYLES.get_code(style)
+        except ValueError as e:
+            console.print(f"[red]Error:[/red] {e}")
+            raise typer.Exit(1)
+
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -499,8 +562,8 @@ def create_video(
             with get_client(profile) as client:
                 result = client.create_video_overview(
                     notebook_id,
-                    format=format,
-                    visual_style=style,
+                    format_code=format_code,
+                    visual_style_code=style_code,
                     language=language,
                     focus_prompt=focus,
                     source_ids=parse_source_ids(source_ids),
