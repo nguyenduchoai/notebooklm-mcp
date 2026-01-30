@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2026-01-30
+
+### Fixed
+- **Source List Display**: Fixed source list showing empty type by using `source_type_name` key correctly
+
+## [0.2.5] - 2026-01-30
+
+### Added
+- **Unified Note Tool** - Consolidated 4 separate note tools (`note_create`, `note_list`, `note_update`, `note_delete`) into a single `note(action=...)` tool
+- **CLI Shell Completion** - Enabled shell tab completion for `nlm skill` tool argument
+- **Documentation Updates** - Updated `SKILL.md`, `command_reference.md`, `troubleshooting.md`, and `workflows.md` with latest features
+
+### Fixed
+- Fixed `nlm skill install other` automatically switching to project level
+- Fixed `research_status` handling of `None` tasks in response
+- Fixed note creation returning failure despite success (timing issue with immediate fetch)
+
 ## [0.2.4] - 2026-01-29
 
 ### Added
