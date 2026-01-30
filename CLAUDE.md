@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**NotebookLM MCP Server** - Provides programmatic access to NotebookLM (notebooklm.google.com) using internal APIs.
+**NotebookLM MCP Server & CLI** - Provides programmatic access to NotebookLM (notebooklm.google.com) via both a Model Context Protocol server and a comprehensive command-line interface.
 
 Tested with personal/free tier accounts. May work with Google Workspace accounts but has not been tested.
 
@@ -85,16 +85,30 @@ When API calls fail with auth errors, re-extract fresh cookies from Chrome DevTo
 ## Architecture
 
 ```
-src/notebooklm_mcp/
+src/notebooklm_tools/
 ├── __init__.py      # Package version
-├── server.py        # FastMCP server with tool definitions
-├── api_client.py    # Internal API client
-├── constants.py     # Code-name mappings (CodeMapper class)
-├── auth.py          # Token caching and validation
-└── auth_cli.py      # CLI for Chrome-based auth (notebooklm-mcp-auth)
+├── cli/             # CLI commands and formatting
+├── mcp/server.py    # FastMCP server with tool definitions
+├── core/client.py   # Internal API client
+├── core/constants.py # Code-name mappings (CodeMapper class)
+├── core/auth.py     # AuthManager for profile-based token caching
+├── core/auth_cli.py # CLI for Chrome-based auth (notebooklm-mcp-auth)
+└── utils/
+    ├── config.py    # Configuration and storage paths (profile isolation)
+    └── cdp.py       # Chrome DevTools Protocol for cookie/email extraction
+```
+
+**Storage Structure (`~/.notebooklm-mcp-cli/`):**
+```
+├── config.toml                    # CLI settings (default_profile, output format)
+├── aliases.json                   # Notebook aliases
+├── profiles/<name>/auth.json      # Per-profile credentials and email
+├── chrome-profile/                # Chrome session (single-profile/legacy)
+└── chrome-profiles/<name>/        # Chrome sessions (multi-profile)
 ```
 
 **Executables:**
+- `nlm` - Command-line interface
 - `notebooklm-mcp` - The MCP server
 - `notebooklm-mcp-auth` - CLI for extracting tokens (requires closing Chrome)
 
@@ -111,9 +125,7 @@ src/notebooklm_mcp/
 | `notebook_rename` | Rename a notebook |
 | `chat_configure` | Configure chat goal/style and response length |
 | `notebook_delete` | Delete a notebook (REQUIRES confirmation) |
-| `notebook_add_url` | Add URL/YouTube source |
-| `notebook_add_text` | Add pasted text source |
-| `notebook_add_drive` | Add Google Drive source |
+| `source_add` | Add source (url, text, drive, file) |
 | `notebook_query` | Ask questions (AI answers!) |
 | `source_list_drive` | List sources with types, check Drive freshness |
 | `source_sync_drive` | Sync stale Drive sources (REQUIRES confirmation) |
@@ -121,19 +133,20 @@ src/notebooklm_mcp/
 | `research_start` | Start Web or Drive research to discover sources |
 | `research_status` | Check research progress and get results |
 | `research_import` | Import discovered sources into notebook |
-| `audio_overview_create` | Generate audio podcasts (REQUIRES confirmation) |
-| `video_overview_create` | Generate video overviews (REQUIRES confirmation) |
-| `infographic_create` | Generate infographics (REQUIRES confirmation) |
-| `slide_deck_create` | Generate slide decks (REQUIRES confirmation) |
-| `report_create` | Generate reports - Briefing Doc, Study Guide, Blog Post, Custom (REQUIRES confirmation) |
-| `flashcards_create` | Generate flashcards with difficulty options (REQUIRES confirmation) |
-| `quiz_create` | Generate interactive quizzes (REQUIRES confirmation) |
-| `data_table_create` | Generate data tables from sources (REQUIRES confirmation) |
-| `mind_map_create` | Generate and save mind maps (REQUIRES confirmation) |
-
+| `studio_create` | Generate unified content (audio, video, infographic, slides, etc.) |
+| `download_artifact` | Download any artifact (audio, video, pdf, markdown, json) |
+| `export_artifact` | Export Data Tables to Google Sheets or Reports to Google Docs |
 | `studio_status` | Check studio artifact generation status |
 | `studio_delete` | Delete studio artifacts (REQUIRES confirmation) |
+| `notebook_share_status` | Get sharing settings and collaborators |
+| `notebook_share_public` | Enable/disable public link access |
+| `notebook_share_invite` | Invite collaborator by email |
 | `save_auth_tokens` | Save tokens extracted via Chrome DevTools MCP |
+| `refresh_auth` | Reload auth tokens or run headless auth |
+| `note_create` | Create a note in a notebook |
+| `note_list` | List all notes in a notebook |
+| `note_update` | Update a note's content or title |
+| `note_delete` | Delete a note (REQUIRES confirmation) |
 
 **IMPORTANT - Operations Requiring Confirmation:**
 - `notebook_delete` requires `confirm=True` - deletion is IRREVERSIBLE
@@ -141,12 +154,11 @@ src/notebooklm_mcp/
 - `source_sync_drive` requires `confirm=True` - always show stale sources first via `source_list_drive`
 - All studio creation tools require `confirm=True` - show settings and get user approval first
 - `studio_delete` requires `confirm=True` - list artifacts first via `studio_status`, deletion is IRREVERSIBLE
+- `note_delete` requires `confirm=True` - deletion is IRREVERSIBLE
 
 ## Features NOT Yet Implemented
 
-- [ ] **Notes** - Save chat responses as notes
-- [ ] **Share notebook** - Collaboration features
-- [ ] **Export** - Download content
+None - all NotebookLM features that can be accessed programmatically are implemented.
 
 ## Troubleshooting
 

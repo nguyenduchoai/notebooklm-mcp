@@ -1,0 +1,151 @@
+"""Export CLI commands - Export artifacts to Google Docs/Sheets."""
+
+from typing import Optional
+
+import typer
+from rich.console import Console
+
+from notebooklm_tools.core.alias import get_alias_manager
+from notebooklm_tools.core.exceptions import NLMError
+from notebooklm_tools.cli.utils import get_client
+
+console = Console()
+app = typer.Typer(
+    help="Export artifacts to Google Docs/Sheets",
+    rich_markup_mode="rich",
+    no_args_is_help=True,
+)
+
+
+@app.command("artifact")
+def export_artifact(
+    notebook: str = typer.Argument(..., help="Notebook ID or alias"),
+    artifact_id: str = typer.Argument(..., help="Artifact ID to export"),
+    export_type: str = typer.Option(
+        ..., "--type", "-t",
+        help="Export type: 'docs' or 'sheets'",
+    ),
+    title: Optional[str] = typer.Option(
+        None, "--title",
+        help="Title for the exported document",
+    ),
+    json_output: bool = typer.Option(False, "--json", "-j", help="Output as JSON"),
+    profile: Optional[str] = typer.Option(None, "--profile", "-p", help="Profile to use"),
+) -> None:
+    """Export an artifact to Google Docs or Sheets.
+    
+    Examples:
+        nlm export artifact NOTEBOOK_ID ARTIFACT_ID --type docs
+        nlm export artifact NOTEBOOK_ID ARTIFACT_ID --type sheets --title "My Data"
+    """
+    # Validate export type
+    if export_type.lower() not in ("docs", "sheets"):
+        console.print(f"[red]Error:[/red] Invalid export type '{export_type}'. Must be 'docs' or 'sheets'.")
+        raise typer.Exit(1)
+    
+    try:
+        notebook_id = get_alias_manager().resolve(notebook)
+        with get_client(profile) as client:
+            result = client.export_artifact(
+                notebook_id=notebook_id,
+                artifact_id=artifact_id,
+                title=title or "NotebookLM Export",
+                export_type=export_type.lower(),
+            )
+        
+        if json_output:
+            import json
+            console.print(json.dumps(result, indent=2))
+            return
+        
+        if result.get("url"):
+            export_label = "Google Docs" if export_type.lower() == "docs" else "Google Sheets"
+            console.print(f"[green]✓[/green] Exported to {export_label}")
+            console.print(f"[bold]URL:[/bold] {result['url']}")
+        else:
+            console.print(f"[red]✗[/red] Export failed: {result.get('message', 'Unknown error')}")
+            raise typer.Exit(1)
+    except NLMError as e:
+        console.print(f"[red]Error:[/red] {e.message}")
+        if e.hint:
+            console.print(f"\n[dim]Hint: {e.hint}[/dim]")
+        raise typer.Exit(1)
+    except ValueError as e:
+        console.print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("to-docs")
+def export_to_docs(
+    notebook: str = typer.Argument(..., help="Notebook ID or alias"),
+    artifact_id: str = typer.Argument(..., help="Artifact ID to export (Report)"),
+    title: Optional[str] = typer.Option(
+        None, "--title",
+        help="Title for the Google Doc",
+    ),
+    profile: Optional[str] = typer.Option(None, "--profile", "-p", help="Profile to use"),
+) -> None:
+    """Export a Report artifact to Google Docs.
+    
+    Works with: Briefing Doc, Study Guide, Blog Post, etc.
+    
+    Example:
+        nlm export to-docs NOTEBOOK_ID ARTIFACT_ID --title "My Report"
+    """
+    try:
+        notebook_id = get_alias_manager().resolve(notebook)
+        with get_client(profile) as client:
+            result = client.export_report_to_docs(
+                notebook_id=notebook_id,
+                artifact_id=artifact_id,
+                title=title or "Report Export",
+            )
+        
+        if result.get("url"):
+            console.print(f"[green]✓[/green] Exported to Google Docs")
+            console.print(f"[bold]URL:[/bold] {result['url']}")
+        else:
+            console.print(f"[red]✗[/red] Export failed: {result.get('message', 'Unknown error')}")
+            raise typer.Exit(1)
+    except NLMError as e:
+        console.print(f"[red]Error:[/red] {e.message}")
+        if e.hint:
+            console.print(f"\n[dim]Hint: {e.hint}[/dim]")
+        raise typer.Exit(1)
+
+
+@app.command("to-sheets")
+def export_to_sheets(
+    notebook: str = typer.Argument(..., help="Notebook ID or alias"),
+    artifact_id: str = typer.Argument(..., help="Artifact ID to export (Data Table)"),
+    title: Optional[str] = typer.Option(
+        None, "--title",
+        help="Title for the Google Sheet",
+    ),
+    profile: Optional[str] = typer.Option(None, "--profile", "-p", help="Profile to use"),
+) -> None:
+    """Export a Data Table artifact to Google Sheets.
+    
+    Example:
+        nlm export to-sheets NOTEBOOK_ID ARTIFACT_ID --title "My Data Table"
+    """
+    try:
+        notebook_id = get_alias_manager().resolve(notebook)
+        with get_client(profile) as client:
+            result = client.export_data_table_to_sheets(
+                notebook_id=notebook_id,
+                artifact_id=artifact_id,
+                title=title or "Data Table Export",
+            )
+        
+        if result.get("url"):
+            console.print(f"[green]✓[/green] Exported to Google Sheets")
+            console.print(f"[bold]URL:[/bold] {result['url']}")
+        else:
+            console.print(f"[red]✗[/red] Export failed: {result.get('message', 'Unknown error')}")
+            raise typer.Exit(1)
+    except NLMError as e:
+        console.print(f"[red]Error:[/red] {e.message}")
+        if e.hint:
+            console.print(f"\n[dim]Hint: {e.hint}[/dim]")
+        raise typer.Exit(1)

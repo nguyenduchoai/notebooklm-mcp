@@ -2,9 +2,9 @@
 
 ## Project Overview
 
-**NotebookLM MCP Server**
+**NotebookLM MCP Server & CLI**
 
-This project implements a Model Context Protocol (MCP) server that provides programmatic access to [NotebookLM](https://notebooklm.google.com). It allows AI agents and developers to interact with NotebookLM notebooks, sources, and query capabilities.
+This project implements a Model Context Protocol (MCP) server **and a full-featured Command Line Interface (CLI)** that provides programmatic access to [NotebookLM](https://notebooklm.google.com). It allows AI agents, developers, and power users to interact with NotebookLM notebooks, sources, query capabilities, and **download generated artifacts** (Audio, Video, PDF, etc.).
 
 Tested with personal/free tier accounts. May work with Google Workspace accounts but has not been tested. This project relies on internal APIs (`batchexecute` RPCs).
 
@@ -21,8 +21,8 @@ The project uses `uv` for dependency management and tool installation.
 
 **From PyPI (Recommended):**
 ```bash
-uv tool install notebooklm-mcp-server
-# or: pip install notebooklm-mcp-server
+uv tool install notebooklm-mcp-cli
+# or: pip install notebooklm-mcp-cli
 ```
 
 **From Source (Development):**
@@ -103,12 +103,17 @@ uv run pytest tests/test_api_client.py
 
 ## Project Structure
 
-- `src/notebooklm_mcp/`
-    - `server.py`: Main entry point. Defines the MCP server and tools.
-    - `api_client.py`: The core logic. Contains the internal API calls.
-    - `constants.py`: Single source of truth for all API code-name mappings.
-    - `auth.py`: Handles token validation, storage, and loading.
-    - `auth_cli.py`: Implementation of the `notebooklm-mcp-auth` CLI.
+- `src/notebooklm_tools/`
+    - `cli/`: CLI commands and formatting
+    - `mcp/`: MCP Server implementation
+        - `logs/`: Logging configuration
+        - `tools/`: Modular tool definitions (`files.py` for each domain)
+        - `server.py`: Slim server facade (imports tools from modules)
+    - `core/client.py`: The core logic. Contains the internal API calls.
+    - `core/constants.py`: Single source of truth for all API code-name mappings.
+    - `core/auth.py`: Handles token validation, storage, and loading.
+    - `core/auth_cli.py`: Implementation of the `notebooklm-mcp-auth` CLI.
+    - `utils/`: Configuration and browser utilities
 - `CLAUDE.md`: Contains detailed documentation on the internal RPC IDs and protocol specifics. **Refer to this file for API deep dives.**
 - `pyproject.toml`: Project configuration and dependencies.
 
@@ -118,3 +123,11 @@ uv run pytest tests/test_api_client.py
 - **RPC Protocol:** The API uses Google's `batchexecute` protocol. Responses often contain "anti-XSSI" prefixes (`)]}'`) that must be stripped.
 - **Tools:** New features should be exposed as MCP tools in `server.py`.
 - **Constants:** All code-name mappings should be defined in `constants.py` using the `CodeMapper` class.
+
+## Recent Additions
+
+- **Skill Commands**: `nlm skill install/uninstall/list/show` for AI assistant integration
+- **Cursor Support**: Added Cursor AI editor to supported skill targets
+- **Verb-First Commands**: Alternative command style (`nlm install skill`, `nlm list skills`)
+- **Interactive Artifact Downloads**: `download_quiz` and `download_flashcards` with JSON/Markdown/HTML formats
+- **Sharing API**: `notebook_share_status`, `notebook_share_public`, `notebook_share_invite` for collaboration

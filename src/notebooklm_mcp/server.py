@@ -1776,7 +1776,7 @@ def mind_map_create(
             source_ids = [s["id"] for s in sources if s.get("id")]
 
         # Step 1: Generate the mind map
-        gen_result = client.generate_mind_map(source_ids=source_ids)
+        gen_result = client.generate_mind_map(source_ids)
         if not gen_result or not gen_result.get("mind_map_json"):
             return {"status": "error", "error": "Failed to generate mind map"}
 

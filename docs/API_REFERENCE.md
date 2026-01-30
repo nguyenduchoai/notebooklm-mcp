@@ -1097,6 +1097,158 @@ Retrieves all existing mind maps for a notebook.
 
 ---
 
+## Notes RPCs
+
+Notes are saved AI chat responses that appear in the notebook's left panel. They share the same storage structure as mind maps (both use `cFji9` for listing) but are distinguished by their content format.
+
+**Key Differences from Mind Maps:**
+- Notes: Plain text content
+- Mind Maps: JSON structure with `"children"` or `"nodes"` keys
+
+### `CYK0Xb` - Create Note
+
+Creates a new note in a notebook. Same RPC as Save Mind Map, differs by parameters.
+
+```python
+# Request params
+params = [
+    notebook_id,
+    "",           # Empty content (updated separately via UPDATE_NOTE)
+    [1],          # Note type identifier
+    None,
+    "Note Title"  # Display title
+]
+
+# Response
+[
+    [note_id, "Note Title"],  # Note ID and title
+]
+```
+
+**Note:** After creation, use `cYAfTb` (UPDATE_NOTE) to set the content.
+
+### `cFji9` - List Notes and Mind Maps
+
+Retrieves all notes and mind maps for a notebook. Filter by content type to distinguish.
+
+```python
+# Request params
+[notebook_id]
+
+# Response
+[
+    [
+        # Regular note
+        [note_id, [
+            note_id,
+            "Note content text",
+            [metadata],
+            None,
+            "Note Title"
+        ], status],
+
+        # Mind map (has JSON content)
+        [mind_map_id, [
+            mind_map_id,
+            '{"children": [...]}',  # JSON structure
+            [metadata],
+            None,
+            "Mind Map Title"
+        ], status],
+
+        # Deleted item (status = 2 or data is None)
+        [deleted_id, None, 2],
+    ],
+    [timestamp, nanos]  # Last updated
+]
+```
+
+**Item Structure:**
+- `[0]`: Item ID
+- `[1]`: Item data (or None if deleted)
+  - `[0]`: Item ID (duplicate)
+  - `[1]`: Content (text for notes, JSON for mind maps)
+  - `[2]`: Metadata
+  - `[3]`: Always None
+  - `[4]`: Title
+- `[2]`: Status (2 = deleted)
+
+**Filtering Notes from Mind Maps:**
+```python
+for item in items:
+    if item[1] is None or (len(item) > 2 and item[2] == 2):
+        continue  # Skip deleted items
+
+    content = item[1][1]
+    try:
+        parsed = json.loads(content)
+        if "children" in parsed or "nodes" in parsed:
+            # It's a mind map
+        else:
+            # It's a note
+    except (json.JSONDecodeError, TypeError):
+        # It's a note (plain text)
+```
+
+### `cYAfTb` - Update Note
+
+Updates a note's content and/or title.
+
+```python
+# Request params
+params = [
+    notebook_id,
+    note_id,
+    [[[
+        "Updated note content",
+        "Updated Title",
+        [],  # Unknown field
+        0    # Unknown field
+    ]]],
+]
+
+# Response
+null  # Null on success
+```
+
+**Important:** Both notebook_id and note_id are required.
+
+### `AH0mwd` - Delete Note
+
+Soft-deletes a note (clears content, keeps ID). Same RPC as Delete Mind Map.
+
+```python
+# Request params
+params = [
+    notebook_id,
+    None,
+    [note_id]  # Can delete multiple: [note_id1, note_id2, ...]
+]
+
+# Response
+null  # Null on success
+```
+
+**Note:** This is a soft-delete - the item appears in listings with `status = 2` or `data = None`.
+
+### Notes Workflow
+
+```
+1. Create Note
+   └── CYK0Xb with notebook_id, title → returns note_id
+
+2. Update Content
+   └── cYAfTb with notebook_id, note_id, content, title → returns null
+
+3. List Notes
+   └── cFji9 with notebook_id → filter by content type (text vs JSON)
+
+4. Delete Note
+   └── AH0mwd with notebook_id, note_id → returns null
+```
+
+---
+
 ## Studio Type Codes Summary
 
 | Type Code | Feature | RPC |

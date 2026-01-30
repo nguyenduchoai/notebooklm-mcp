@@ -1,7 +1,10 @@
 
-import pytest
 from unittest.mock import patch
-from notebooklm_mcp.api_client import NotebookLMClient
+
+import pytest
+
+from notebooklm_tools.core.client import NotebookLMClient
+
 
 @pytest.fixture
 def mock_client():

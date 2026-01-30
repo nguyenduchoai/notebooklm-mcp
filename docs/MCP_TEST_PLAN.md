@@ -1,18 +1,29 @@
 # NotebookLM MCP - Comprehensive Test Plan
 
-**Purpose:** Verify all 31 MCP tools work correctly.
+**Purpose:** Verify all **30 consolidated MCP tools** work correctly.
+
+**Version:** 2.1 (Updated 2026-01-28 after notes API implementation)
+
+**Changes from v2.0:**
+- Added notes management: 4 new tools (`note_create`, `note_list`, `note_update`, `note_delete`)
+- Total tools: 26 → 30
+
+**Changes from v1:**
+- Tools consolidated: 46 → 26 (-43%)
+- `source_add(type=...)` replaces 4 source tools
+- `studio_create(type=...)` replaces 9 creation tools
+- `download_artifact(type=...)` replaces 9 download tools
 
 **Prerequisites:**
 - MCP server installed: `uv cache clean && uv tool install --force .`
 - Valid authentication cookies saved
+- **Restart IDE MCP server** after installation
 
-## Automated Testing with Claude Code or Advanced AI Tools
+---
 
-**You can automate this entire test plan using Claude Code or any advanced AI tool with MCP support!**
+## Automated Testing with AI Tools
 
-### Running Automated Tests
-
-Simply ask your AI assistant to:
+**Simply ask your AI assistant to:**
 ```
 Run the automated tests from docs/MCP_TEST_PLAN.md. For the Drive sync test,
 pause before checking freshness, ask me to make a change to the doc, then
@@ -21,38 +32,33 @@ verify both staleness detection and sync functionality work correctly.
 
 ### How Automation Works
 
-Your AI assistant will:
 1. **Execute tests sequentially** - Run through each test group automatically
 2. **Track progress** - Use a todo list to show what's being tested
 3. **Pause for user input** - Stop at Drive sync test to ask you to modify a document
-4. **Validate end-to-end** - Confirm both out-of-sync detection and sync functionality
-5. **Report results** - Provide a comprehensive summary of all tests
-
-### Benefits of Automation
-
-- ✅ **Faster testing** - Complete all 30 tools in minutes instead of hours
-- ✅ **Consistent validation** - Every tool tested the same way each time
-- ✅ **Full coverage** - Every tool tested the same way each time
-- ✅ **Interactive verification** - AI pauses for critical validations (like Drive sync)
-
-**Example workflow for Drive sync:**
-1. AI adds a Drive document to test notebook
-2. AI **pauses** and asks you to modify the doc
-3. You make a small change (add text, modify content, etc.)
-4. AI checks freshness (should detect `is_fresh: false`)
-5. AI syncs the document
-6. AI verifies sync worked (`is_fresh: true`)
+4. **Report results** - Provide a comprehensive summary of all tests
 
 ---
 
 ## Test Group 1: Authentication & Basic Operations
 
-### Test 1.1 - Save Auth Tokens
+### Test 1.1 - Refresh Auth
+**Tool:** `refresh_auth`
+
+**Prompt:**
+```
+Refresh authentication tokens for NotebookLM.
+```
+
+**Expected:** Success message with auth status.
+
+---
+
+### Test 1.2 - Save Auth Tokens (Fallback)
 **Tool:** `save_auth_tokens`
 
 **Prompt:**
 ```
-I have cookies from Chrome DevTools. Let me save them using save_auth_tokens.
+I have cookies from Chrome DevTools. Save them using save_auth_tokens.
 [Note: Use actual cookies from your browser session]
 ```
 
@@ -60,7 +66,7 @@ I have cookies from Chrome DevTools. Let me save them using save_auth_tokens.
 
 ---
 
-### Test 1.2 - List Notebooks
+### Test 1.3 - List Notebooks
 **Tool:** `notebook_list`
 
 **Prompt:**
@@ -72,7 +78,7 @@ List all my NotebookLM notebooks.
 
 ---
 
-### Test 1.3 - Create Notebook
+### Test 1.4 - Create Notebook
 **Tool:** `notebook_create`
 
 **Prompt:**
@@ -80,25 +86,25 @@ List all my NotebookLM notebooks.
 Create a new notebook titled "MCP Test Notebook".
 ```
 
-**Expected:** New notebook created with ID and URL.
+**Expected:** New notebook created with `notebook_id` and URL.
 
 **Save:** Note the `notebook_id` for subsequent tests.
 
 ---
 
-### Test 1.4 - Get Notebook Details
+### Test 1.5 - Get Notebook Details
 **Tool:** `notebook_get`
 
 **Prompt:**
 ```
-Get the details of notebook [notebook_id from Test 1.3].
+Get the details of notebook [notebook_id from Test 1.4].
 ```
 
 **Expected:** Notebook details with empty sources list, timestamps.
 
 ---
 
-### Test 1.5 - Rename Notebook
+### Test 1.6 - Rename Notebook
 **Tool:** `notebook_rename`
 
 **Prompt:**
@@ -110,50 +116,68 @@ Rename notebook [notebook_id] to "MCP Test - Renamed".
 
 ---
 
-## Test Group 2: Adding Sources
+## Test Group 2: Adding Sources (Consolidated source_add)
 
 ### Test 2.1 - Add URL Source
-**Tool:** `notebook_add_url`
+**Tool:** `source_add`
 
 **Prompt:**
 ```
-Add this URL to notebook [notebook_id]: https://en.wikipedia.org/wiki/Artificial_intelligence
+Add a URL source to notebook [notebook_id]:
+- source_type: url
+- url: https://en.wikipedia.org/wiki/Artificial_intelligence
 ```
 
-**Expected:** Source added successfully.
+**Expected:** Source added with `source_id`, `source_type: url`.
 
 ---
 
 ### Test 2.2 - Add Text Source
-**Tool:** `notebook_add_text`
+**Tool:** `source_add`
 
 **Prompt:**
 ```
-Add this text as a source to notebook [notebook_id]:
-Title: "Test Document"
-Text: "This is a test document about machine learning. Machine learning is a subset of artificial intelligence that focuses on algorithms that can learn from data."
+Add a text source to notebook [notebook_id]:
+- source_type: text
+- title: "Test Document"
+- text: "This is a test document about machine learning. Machine learning is a subset of artificial intelligence."
 ```
 
-**Expected:** Text source added successfully.
+**Expected:** Text source added with `source_id`, `source_type: text`.
 
 ---
 
-### Test 2.3 - Add Drive Source (Optional - requires Drive doc)
-**Tool:** `notebook_add_drive`
+### Test 2.3 - Add Drive Source (Optional)
+**Tool:** `source_add`
 
 **Prompt:**
 ```
-Add this Google Drive document to notebook [notebook_id]:
-Document ID: [your_doc_id]
-Title: "My Drive Doc"
-Type: doc
+Add a Drive document to notebook [notebook_id]:
+- source_type: drive
+- document_id: [your_doc_id]
+- title: "My Drive Doc"
+- doc_type: doc
 ```
 
-**Expected:** Drive source added successfully (or skip if no Drive doc available).
+**Expected:** Drive source added (or skip if no Drive doc available).
 
 ---
 
-### Test 2.4 - List Sources with Drive Status
+### Test 2.4 - Add File Source (Optional)
+**Tool:** `source_add`
+
+**Prompt:**
+```
+Add a file to notebook [notebook_id]:
+- source_type: file
+- file_path: /path/to/document.pdf
+```
+
+**Expected:** File uploaded with `source_id`, `method: resumable`.
+
+---
+
+### Test 2.5 - List Sources with Drive Status
 **Tool:** `source_list_drive`
 
 **Prompt:**
@@ -163,43 +187,43 @@ List all sources in notebook [notebook_id] and check their Drive freshness statu
 
 **Expected:** List showing sources by type, Drive sources show freshness.
 
-**Save:** Note a `source_id` for Test 2.5.
+**Save:** Note a `source_id` for next tests.
 
 ---
 
-### Test 2.5 - Describe Source
+### Test 2.6 - Describe Source
 **Tool:** `source_describe`
 
 **Prompt:**
 ```
-Get an AI-generated summary of source [source_id from Test 2.4].
+Get an AI-generated summary of source [source_id].
 ```
 
-**Expected:** AI summary with keywords/chips.
+**Expected:** AI summary with keywords.
 
 ---
 
-### Test 2.6 - Get Source Content
+### Test 2.7 - Get Source Content
 **Tool:** `source_get_content`
 
 **Prompt:**
 ```
-Get the raw text content of source [source_id from Test 2.4].
+Get the raw text content of source [source_id].
 ```
 
-**Expected:** Raw text content with title, source_type, char_count, and content fields. No AI processing.
+**Expected:** Raw text content with title, source_type, char_count.
 
 ---
 
-### Test 2.7 - Delete Source
+### Test 2.8 - Delete Source
 **Tool:** `source_delete`
 
 **Prompt:**
 ```
-Delete source [source_id from Test 2.5] from the notebook.
+Delete source [source_id] with confirm=True.
 ```
 
-**Expected:** Source permanently deleted. Requires `confirm=True` after user approval.
+**Expected:** Source permanently deleted.
 
 ---
 
@@ -222,7 +246,7 @@ Get an AI-generated summary of what notebook [notebook_id] is about.
 
 **Prompt:**
 ```
-Ask this question about notebook [notebook_id]: "What is artificial intelligence?"
+Ask notebook [notebook_id]: "What is artificial intelligence?"
 ```
 
 **Expected:** AI answer with conversation_id.
@@ -235,8 +259,8 @@ Ask this question about notebook [notebook_id]: "What is artificial intelligence
 **Prompt:**
 ```
 Configure notebook [notebook_id] chat settings:
-- Goal: learning_guide
-- Response length: longer
+- goal: learning_guide
+- response_length: longer
 ```
 
 **Expected:** Settings updated successfully.
@@ -249,16 +273,16 @@ Configure notebook [notebook_id] chat settings:
 **Prompt:**
 ```
 Configure notebook [notebook_id] chat settings:
-- Goal: custom
-- Custom prompt: "You must respond only in rhyming couplets. Every response should rhyme."
-- Response length: default
+- goal: custom
+- custom_prompt: "You must respond only in rhyming couplets."
+- response_length: default
 ```
 
-**Expected:** Settings updated successfully with custom_prompt echoed back.
+**Expected:** Settings updated with custom_prompt echoed back.
 
 ---
 
-### Test 3.5 - Verify Custom Chat Prompt Works
+### Test 3.5 - Verify Custom Chat Works
 **Tool:** `notebook_query`
 
 **Prompt:**
@@ -266,11 +290,11 @@ Configure notebook [notebook_id] chat settings:
 Ask notebook [notebook_id]: "What is machine learning?"
 ```
 
-**Expected:** AI response should be in rhyming couplets, demonstrating the custom prompt is active.
+**Expected:** AI response should be in rhyming couplets.
 
 ---
 
-## Test Group 4: Research (Fast Mode)
+## Test Group 4: Research
 
 ### Test 4.1 - Start Fast Research (Web)
 **Tool:** `research_start`
@@ -278,6 +302,8 @@ Ask notebook [notebook_id]: "What is machine learning?"
 **Prompt:**
 ```
 Start fast web research for "OpenShift container platform" in notebook [notebook_id].
+- mode: fast
+- source: web
 ```
 
 **Expected:** Research task started with task_id.
@@ -286,24 +312,22 @@ Start fast web research for "OpenShift container platform" in notebook [notebook
 
 ---
 
-### Test 4.2 - Check Fast Research Status
+### Test 4.2 - Check Research Status
 **Tool:** `research_status`
 
 **Prompt:**
 ```
-Check the status of research for notebook [notebook_id]. Poll until complete.
+Check research status for notebook [notebook_id]. Poll until complete.
 ```
 
 **Expected:**
-- Research completes with `status: completed`
+- `status: completed`
 - `mode: fast`
-- `source_count`: ~10 sources (fast mode discovers ~10 sources)
-- Each source has `url`, `title`, `description`
-- No `report` field (fast mode doesn't generate reports)
+- `source_count`: ~10 sources
 
 ---
 
-### Test 4.3 - Import Fast Research Sources
+### Test 4.3 - Import Research Sources
 **Tool:** `research_import`
 
 **Prompt:**
@@ -315,265 +339,340 @@ Import all discovered sources from research task [task_id] into notebook [notebo
 
 ---
 
-### Test 4.4 - START Deep Research (Run in Background)
+### Test 4.4 - Start Deep Research (Background)
 **Tool:** `research_start`
 
 **Prompt:**
 ```
 Start deep web research for "AI ROI return on investment" in notebook [notebook_id].
-Mode: deep
+- mode: deep
 ```
 
-**Expected:** Research task started with task_id and message about 3-5 minute duration.
+**Expected:** Research task started (takes 3-5 minutes).
 
-**Save:** Note the `task_id` for Test 9.1.
-
-**IMPORTANT:** Deep research takes 3-5 minutes to complete. **Do NOT wait here.** Continue with Test Group 5-8 while deep research runs in the background. We'll verify and import results in Test Group 9.
+**IMPORTANT:** Continue with Test Group 5-7 while deep research runs.
 
 ---
 
-## Test Group 5: Studio - Audio/Video
+## Test Group 5: Studio Creation (Consolidated studio_create)
 
-### Test 5.1 - Create Audio Overview (with confirmation)
-**Tool:** `audio_overview_create`
+### Test 5.1 - Create Audio Overview
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
 Create an audio overview for notebook [notebook_id]:
-- Format: brief
-- Length: short
-- Language: en
-Show me the settings first (confirm=False).
+- artifact_type: audio
+- format: brief
+- length: short
+- confirm: False (show settings first)
 ```
 
-**Expected:** Settings shown for approval.
-
-**Follow-up Prompt:**
+**Follow-up:**
 ```
-Confirmed. Create the audio overview with confirm=True.
+Confirmed. Create with confirm=True.
 ```
 
 **Expected:** Audio generation started with artifact_id.
 
-**Save:** Note the `artifact_id`.
-
 ---
 
-### Test 5.2 - Create Video Overview (with confirmation)
-**Tool:** `video_overview_create`
+### Test 5.2 - Create Video Overview
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
 Create a video overview for notebook [notebook_id]:
-- Format: brief
-- Visual style: classic
-- Language: en
-Show me settings first.
-```
-
-**Expected:** Settings shown.
-
-**Follow-up:**
-```
-Confirmed. Create it.
+- artifact_type: video
+- format: brief
+- visual_style: classic
+- confirm: True
 ```
 
 **Expected:** Video generation started.
 
 ---
 
-### Test 5.3 - Check Studio Status
-**Tool:** `studio_status`
+### Test 5.3 - Create Report
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
-Check the studio content generation status for notebook [notebook_id].
+Create a report for notebook [notebook_id]:
+- artifact_type: report
+- report_format: Briefing Doc
+- confirm: True
 ```
 
-**Expected:** List of artifacts (audio, video) with status (in_progress or completed). URLs when completed.
+**Expected:** Report generation started.
 
 ---
 
-### Test 5.4 - Delete Studio Artifact (with confirmation)
-**Tool:** `studio_delete`
+### Test 5.4 - Create Flashcards
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
-Delete the audio artifact [artifact_id from Test 5.1] from notebook [notebook_id].
-First show me what will be deleted.
+Create flashcards for notebook [notebook_id]:
+- artifact_type: flashcards
+- difficulty: medium
+- confirm: True
 ```
 
-**Expected:** Error asking for confirmation.
-
-**Follow-up:**
-```
-Confirmed. Delete it with confirm=True.
-```
-
-**Expected:** Artifact deleted successfully.
+**Expected:** Flashcards generation started.
 
 ---
 
-## Test Group 6: Studio - Other Formats
-
-### Test 6.1 - Create Infographic (with confirmation)
-**Tool:** `infographic_create`
+### Test 5.5 - Create Quiz
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
-Create an infographic for notebook [notebook_id]:
-- Orientation: landscape
-- Detail level: standard
-- Language: en
-Show settings first.
+Create a quiz for notebook [notebook_id]:
+- artifact_type: quiz
+- question_count: 2
+- difficulty: medium
+- confirm: True
 ```
-
-**Expected:** Settings shown.
-
-**Follow-up:** Approve and create.
-
-**Expected:** Infographic generation started.
-
----
-
-### Test 6.2 - Create Slide Deck (with confirmation)
-**Tool:** `slide_deck_create`
-
-**Prompt:**
-```
-Create a slide deck for notebook [notebook_id]:
-- Format: detailed_deck
-- Length: short
-Show settings first.
-```
-
-**Expected:** Settings shown, then generation starts.
-
----
-
-### Test 6.3 - Create Report (with confirmation)
-**Tool:** `report_create`
-
-**Prompt:**
-```
-Create a "Briefing Doc" report for notebook [notebook_id].
-Show settings first.
-```
-
-**Expected:** Settings shown, then generation starts.
-
----
-
-### Test 6.4 - Create Flashcards (with confirmation)
-**Tool:** `flashcards_create`
-
-**Prompt:**
-```
-Create flashcards for notebook [notebook_id] with medium difficulty.
-Show settings first.
-```
-
-**Expected:** Settings shown, then generation starts.
-
----
-
-### Test 6.5 - Create Quiz (with confirmation)
-**Tool:** `quiz_create`
-
-**Prompt:**
-```
-Create a quiz for notebook [notebook_id] with 2 questions and medium difficulty.
-Show settings first.
-```
-
-**Expected:** Settings shown.
-
-**Follow-up:** Approve and create.
 
 **Expected:** Quiz generation started.
 
 ---
 
-### Test 6.6 - Create Data Table (with confirmation)
-**Tool:** `data_table_create`
+### Test 5.6 - Create Infographic
+**Tool:** `studio_create`
 
 **Prompt:**
 ```
-Create a data table for notebook [notebook_id] extracting "Key features and capabilities" in English.
-Show settings first.
+Create an infographic for notebook [notebook_id]:
+- artifact_type: infographic
+- orientation: landscape
+- detail_level: standard
+- confirm: True
 ```
 
-**Expected:** Settings shown.
+**Expected:** Infographic generation started.
 
-**Follow-up:** Approve and create.
+---
+
+### Test 5.7 - Create Slide Deck
+**Tool:** `studio_create`
+
+**Prompt:**
+```
+Create a slide deck for notebook [notebook_id]:
+- artifact_type: slide_deck
+- format: detailed_deck
+- length: short
+- confirm: True
+```
+
+**Expected:** Slide deck generation started.
+
+---
+
+### Test 5.8 - Create Mind Map
+**Tool:** `studio_create`
+
+**Prompt:**
+```
+Create a mind map for notebook [notebook_id]:
+- artifact_type: mind_map
+- title: "AI Concepts"
+- confirm: True
+```
+
+**Expected:** Mind map created immediately.
+
+---
+
+### Test 5.9 - Create Data Table
+**Tool:** `studio_create`
+
+**Prompt:**
+```
+Create a data table for notebook [notebook_id]:
+- artifact_type: data_table
+- description: "Key features and capabilities"
+- confirm: True
+```
 
 **Expected:** Data table generation started.
 
 ---
 
-## Test Group 7: Mind Maps
-
-### Test 7.1 - Create Mind Map (with confirmation)
-**Tool:** `mind_map_create`
+### Test 5.10 - Check Studio Status
+**Tool:** `studio_status`
 
 **Prompt:**
 ```
-Create a mind map titled "AI Concepts" for notebook [notebook_id].
-Show settings first.
+Check studio content generation status for notebook [notebook_id].
 ```
 
-**Expected:** Settings shown.
-
-**Follow-up:** Approve.
-
-**Expected:** Mind map created immediately with mind_map_id.
-
-**Save:** Note the `mind_map_id`.
+**Expected:** List of artifacts with status (in_progress/completed) and URLs.
 
 ---
 
+## Test Group 6: Downloads (Consolidated download_artifact)
 
+### Test 6.1 - Download Report
+**Tool:** `download_artifact`
+
+**Prompt:**
+```
+Download the report from notebook [notebook_id]:
+- artifact_type: report
+- output_path: /tmp/report.md
+```
+
+**Expected:** Report downloaded as markdown.
+
+---
+
+### Test 6.2 - Download Flashcards (JSON)
+**Tool:** `download_artifact`
+
+**Prompt:**
+```
+Download flashcards from notebook [notebook_id]:
+- artifact_type: flashcards
+- output_path: /tmp/flashcards.json
+- output_format: json
+```
+
+**Expected:** Flashcards downloaded as JSON.
+
+---
+
+### Test 6.3 - Download Quiz (Markdown)
+**Tool:** `download_artifact`
+
+**Prompt:**
+```
+Download quiz from notebook [notebook_id]:
+- artifact_type: quiz
+- output_path: /tmp/quiz.md
+- output_format: markdown
+```
+
+**Expected:** Quiz downloaded as markdown.
+
+---
+
+### Test 6.4 - Download Audio
+**Tool:** `download_artifact`
+
+**Prompt:**
+```
+Download audio from notebook [notebook_id]:
+- artifact_type: audio
+- output_path: /tmp/podcast.mp4
+```
+
+**Expected:** Audio downloaded as MP4.
+
+---
+
+### Test 6.5 - Download Slide Deck
+**Tool:** `download_artifact`
+
+**Prompt:**
+```
+Download slide deck from notebook [notebook_id]:
+- artifact_type: slide_deck
+- output_path: /tmp/slides.pdf
+```
+
+**Expected:** Slides downloaded as PDF.
+
+---
+
+## Test Group 7: Sharing
+
+### Test 7.1 - Get Share Status
+**Tool:** `notebook_share_status`
+
+**Prompt:**
+```
+Get sharing status for notebook [notebook_id].
+```
+
+**Expected:** Status with `is_public`, `access_level`, `collaborators`.
+
+---
+
+### Test 7.2 - Enable Public Link
+**Tool:** `notebook_share_public`
+
+**Prompt:**
+```
+Enable public link for notebook [notebook_id].
+- is_public: True
+```
+
+**Expected:** Public link returned.
+
+---
+
+### Test 7.3 - Disable Public Link
+**Tool:** `notebook_share_public`
+
+**Prompt:**
+```
+Disable public link for notebook [notebook_id].
+- is_public: False
+```
+
+**Expected:** Public link disabled.
+
+---
+
+### Test 7.4 - Invite Collaborator (Optional)
+**Tool:** `notebook_share_invite`
+
+**Prompt:**
+```
+Invite collaborator to notebook [notebook_id]:
+- email: test@example.com
+- role: viewer
+```
+
+**Expected:** Invitation sent (or error if email invalid).
+
+---
 
 ## Test Group 8: Drive Sync (Optional)
 
-### Test 8.1 - Sync Drive Sources (with confirmation)
+### Test 8.1 - Sync Drive Sources
 **Tool:** `source_sync_drive`
 
 **Prompt:**
 ```
 Check if any Drive sources in notebook [notebook_id] are stale using source_list_drive.
-If any are stale, sync them using source_sync_drive.
+If any are stale, sync them using source_sync_drive with confirm=True.
 ```
 
 **Expected:** Sources synced if any were stale.
 
-**Note:** Skip if no Drive sources exist.
-
 ---
 
-## Test Group 9: Deep Research Verification (Background Task Complete)
+## Test Group 9: Deep Research Verification
 
-**TIMING:** By now, the deep research started in Test 4.4 should be complete (3-5 minutes have passed).
+**TIMING:** By now, deep research from Test 4.4 should be complete.
 
 ### Test 9.1 - Check Deep Research Status
 **Tool:** `research_status`
 
 **Prompt:**
 ```
-Check the status of deep research for notebook [notebook_id]. Set max_wait to 60 seconds.
+Check deep research status for notebook [notebook_id] with max_wait=60.
 ```
 
 **Expected:**
-- Research completes with `status: completed`
+- `status: completed`
 - `mode: deep`
-- `source_count`: ~40-50 sources (deep mode discovers more sources)
-- `sources` array shows first 10 sources (truncated by default to save tokens)
-- `sources_truncated` message indicates total count
-- **CRITICAL:** `report` field present but truncated to 500 chars (full report available via notebook query)
-
-**Note:** By default, `research_status` uses `compact=True` to save tokens. The status, count, and task_id are preserved - only the verbose report text and full source list are truncated. Use `compact=False` to get the full 10,000+ char report.
-
-**Validation:** If `source_count` is 0 or `report` is missing entirely, there may be a parsing bug.
+- `source_count`: ~40-50 sources
+- `report` field present
 
 ---
 
@@ -582,206 +681,161 @@ Check the status of deep research for notebook [notebook_id]. Set max_wait to 60
 
 **Prompt:**
 ```
-Import all discovered sources from deep research task [task_id from Test 4.4] into notebook [notebook_id].
+Import all deep research sources from task [task_id] into notebook [notebook_id].
 ```
 
-**Expected:** Sources imported successfully with count matching source_count from Test 9.1.
+**Expected:** Sources imported successfully.
 
 ---
 
-## Test Group 10: Comprehensive Cleanup
+## Test Group 10: Cleanup
 
-**IMPORTANT:** This section validates that ALL deletion operations work correctly. We've had issues with deletion in the past, so comprehensive cleanup testing is critical.
-
-### Test 10.1 - List All Studio Artifacts
-**Tool:** `studio_status`
-
-**Prompt:**
-```
-Get the full studio status for notebook [notebook_id] to see all artifacts created during testing.
-```
-
-**Expected:** List of all artifacts (audio, video, infographic, slide_deck, report, flashcards, quiz, data_table, mind_map).
-
-**Save:** Note all `artifact_id` values for deletion.
-
----
-
-### Test 10.2 - Delete Each Studio Artifact
+### Test 10.1 - Delete Studio Artifacts
 **Tool:** `studio_delete`
 
-**Prompt (repeat for each artifact):**
-```
-Delete artifact [artifact_id] from notebook [notebook_id] with confirm=True.
-```
-
-**Expected:** Each artifact deleted successfully. Repeat for:
-- [ ] Audio overview
-- [ ] Video overview
-- [ ] Infographic
-- [ ] Slide deck
-- [ ] Report
-- [ ] Flashcards
-- [ ] Quiz
-- [ ] Data table
-- [ ] Mind map (if applicable)
-
----
-
-### Test 10.3 - Verify Studio Empty
-**Tool:** `studio_status`
-
 **Prompt:**
 ```
-Check studio status for notebook [notebook_id] to verify all artifacts are deleted.
+Get studio status for notebook [notebook_id], then delete each artifact with confirm=True.
 ```
 
-**Expected:** Empty artifacts list or `total: 0`.
+**Expected:** All artifacts deleted.
 
 ---
 
-### Test 10.4 - List All Sources
-**Tool:** `source_list_drive`
-
-**Prompt:**
-```
-List all sources in notebook [notebook_id].
-```
-
-**Expected:** List of all sources (URL, text, Drive, research imports).
-
-**Save:** Note all `source_id` values for deletion.
-
----
-
-### Test 10.5 - Delete Each Source
+### Test 10.2 - Delete All Sources
 **Tool:** `source_delete`
 
-**Prompt (repeat for each source):**
-```
-Delete source [source_id] with confirm=True.
-```
-
-**Expected:** Each source deleted successfully.
-
----
-
-### Test 10.6 - Verify Sources Empty
-**Tool:** `source_list_drive`
-
 **Prompt:**
 ```
-List sources in notebook [notebook_id] to verify all are deleted.
+List sources in notebook [notebook_id], then delete each with confirm=True.
 ```
 
-**Expected:** Empty sources list or `total_sources: 0`.
+**Expected:** All sources deleted.
 
 ---
 
-### Test 10.7 - Delete Notebook (with confirmation)
+### Test 10.3 - Delete Notebook
 **Tool:** `notebook_delete`
 
 **Prompt:**
 ```
-Delete notebook [notebook_id]. Show me the warning first.
-```
-
-**Expected:** Error with warning about irreversible deletion.
-
-**Follow-up:**
-```
-I confirm. Delete it with confirm=True.
+Delete notebook [notebook_id] with confirm=True.
 ```
 
 **Expected:** Notebook deleted successfully.
 
 ---
 
-## Summary Checklist
+## Test Group 11: Notes Management
 
-After completing all tests, verify:
+### Test 11.1 - Create Note
+**Tool:** `note_create`
 
-- [ ] All 31 tools executed without errors
-- [ ] Tools requiring confirmation properly blocked without confirm=True
-- [ ] All create operations returned valid IDs
-- [ ] All status checks returned expected structures
-- [ ] All delete operations worked with confirmation
-- [ ] Error messages were clear and helpful
-- [ ] **All studio artifacts deleted individually before notebook deletion**
-- [ ] **All sources deleted individually before notebook deletion**
-- [ ] **Studio status shows 0 artifacts after cleanup**
-- [ ] **Source list shows 0 sources after cleanup**
+**Prompt:**
+```
+Create a note in notebook [notebook_id] with content "This is a test note about AI" and title "AI Note".
+```
+
+**Expected:** Note created with `note_id`.
+
+**Save:** Note the `note_id` for subsequent tests.
 
 ---
 
-## Tools Tested by Group
+### Test 11.2 - List Notes
+**Tool:** `note_list`
 
-**Authentication (1):** save_auth_tokens
+**Prompt:**
+```
+List all notes in notebook [notebook_id].
+```
 
-**Notebook Operations (5):** notebook_list, notebook_create, notebook_get, notebook_describe, notebook_rename
+**Expected:** Array of notes including the one just created, with previews.
 
-**Source Management (7):** notebook_add_url, notebook_add_text, notebook_add_drive, source_describe, source_get_content, source_list_drive, source_sync_drive, source_delete
+---
 
-**AI Features (3):** notebook_query, chat_configure (learning_guide + custom prompt)
+### Test 11.3 - Update Note
+**Tool:** `note_update`
 
-**Research (3 tools, 6 tests):** research_start, research_status, research_import
-- Tests 4.1-4.3: Fast research (~10 sources, 30 seconds)
-- Tests 4.4-4.6: Deep research (~40+ sources with AI report, 3-5 minutes)
+**Prompt:**
+```
+Update note [note_id] in notebook [notebook_id] with new content "Updated: AI is transforming technology".
+```
 
-**Studio Audio/Video (4):** audio_overview_create, video_overview_create, studio_status, studio_delete
+**Expected:** Success confirmation.
 
-**Studio Other (6):** infographic_create, slide_deck_create, report_create, flashcards_create, quiz_create, data_table_create
+---
 
-**Mind Maps (1):** mind_map_create
+### Test 11.4 - Delete Note
+**Tool:** `note_delete`
 
-**Cleanup (1):** notebook_delete
+**Prompt:**
+```
+Delete note [note_id] in notebook [notebook_id] with confirm=True.
+```
 
-**Total: 31 tools**
+**Expected:** Deletion confirmation message.
+
+---
+
+## Summary: 30 Consolidated Tools
+
+| Category | Tools | Count |
+|----------|-------|-------|
+| **Auth** | `refresh_auth`, `save_auth_tokens` | 2 |
+| **Notebooks** | `notebook_list`, `notebook_get`, `notebook_describe`, `notebook_create`, `notebook_rename`, `notebook_delete` | 6 |
+| **Sources** | `source_add`, `source_list_drive`, `source_sync_drive`, `source_delete`, `source_describe`, `source_get_content` | 6 |
+| **Sharing** | `notebook_share_status`, `notebook_share_public`, `notebook_share_invite` | 3 |
+| **Research** | `research_start`, `research_status`, `research_import` | 3 |
+| **Studio** | `studio_create`, `studio_status`, `studio_delete` | 3 |
+| **Downloads** | `download_artifact` | 1 |
+| **Chat** | `notebook_query`, `chat_configure` | 2 |
+| **Notes** | `note_create`, `note_list`, `note_update`, `note_delete` | 4 |
+| **Total** | | **30** |
 
 ---
 
 ## Quick Copy-Paste Test Prompts
 
-Use these prompts sequentially with another AI tool that has access to the MCP:
-
-1. `List all my NotebookLM notebooks`
-2. `Create a new notebook titled "MCP Test Notebook"`
-3. `Get details of notebook [id]`
-4. `Rename notebook [id] to "MCP Test - Renamed"`
-5. `Add this URL to notebook [id]: https://en.wikipedia.org/wiki/Artificial_intelligence`
-6. `Add text to notebook [id]: "Machine learning test document about AI algorithms"`
-7. `List sources in notebook [id] with Drive status`
-8. `Get AI summary of source [source_id]`
-9. `Get raw text content of source [source_id]`
-10. `Get AI summary of notebook [id]`
-11. `Ask notebook [id]: "What is artificial intelligence?"`
-12. `Configure notebook [id] chat: goal=learning_guide, response_length=longer`
-12b. `Configure notebook [id] chat: goal=custom, custom_prompt="Respond only in rhyming couplets"`
-12c. `Ask notebook [id]: "What is machine learning?"` ← **Verify response is in rhymes**
-13. `Start fast web research for "OpenShift" in notebook [id]`
-14. `Check research status for notebook [id]`
-15. `Import all research sources from task [task_id] into notebook [id]`
-16. `Start DEEP web research for "AI ROI" in notebook [id]` ← **Kicks off 3-5 min background task**
-17. `Create brief audio overview for notebook [id] (show settings first)`
-18. `Confirmed - create it with confirm=True`
-19. `Create brief video overview for notebook [id] (show settings first)`
-20. `Confirmed - create it`
-21. `Check studio status for notebook [id]`
-22. `Create landscape infographic for notebook [id] (show settings first)`
-23. `Create short slide deck for notebook [id] (show settings first)`
-24. `Create Briefing Doc report for notebook [id] (show settings first)`
-25. `Create medium difficulty flashcards for notebook [id] (show settings first)`
-26. `Create quiz with 2 questions and medium difficulty for notebook [id] (show settings first)`
-27. `Create mind map titled "AI Concepts" for notebook [id] (show settings first)`
-28. `Check deep research status for notebook [id]` ← **By now, deep research should be complete**
-29. `Verify source_count > 0 and report field has content`
-30. `Import all deep research sources into notebook [id]`
-
-**Comprehensive Cleanup:**
-31. `Get studio status for notebook [id]` ← **List all artifact IDs**
-32. `Delete each studio artifact [artifact_id] with confirm=True` ← **Repeat for all 9 artifacts**
-33. `Verify studio status shows 0 artifacts`
-34. `List all sources in notebook [id]` ← **List all source IDs**
-35. `Delete each source [source_id] with confirm=True` ← **Repeat for all sources**
-36. `Verify source list shows 0 sources`
-37. `Delete notebook [id] (show warning first)` → `Confirmed - delete with confirm=True`
+```
+1. Refresh auth tokens
+2. List all my NotebookLM notebooks
+3. Create a new notebook titled "MCP Test Notebook"
+4. Get details of notebook [id]
+5. Rename notebook [id] to "MCP Test - Renamed"
+6. Add URL source to notebook [id]: source_type=url, url=https://en.wikipedia.org/wiki/Artificial_intelligence
+7. Add text source to notebook [id]: source_type=text, text="Machine learning test document"
+8. List sources in notebook [id] with Drive status
+9. Get AI summary of source [source_id]
+10. Get raw text content of source [source_id]
+11. Get AI summary of notebook [id]
+12. Ask notebook [id]: "What is artificial intelligence?"
+13. Configure notebook [id] chat: goal=learning_guide, response_length=longer
+14. Configure notebook [id] chat: goal=custom, custom_prompt="Respond in rhymes"
+15. Start fast web research for "OpenShift" in notebook [id]
+16. Check research status for notebook [id]
+17. Import research sources from task [task_id]
+18. Start DEEP web research for "AI ROI" in notebook [id]
+19. Create audio overview: artifact_type=audio, format=brief, confirm=True
+20. Create video overview: artifact_type=video, format=brief, confirm=True
+21. Check studio status for notebook [id]
+22. Create report: artifact_type=report, report_format="Briefing Doc", confirm=True
+23. Create flashcards: artifact_type=flashcards, confirm=True
+24. Create quiz: artifact_type=quiz, question_count=2, confirm=True
+25. Create infographic: artifact_type=infographic, confirm=True
+26. Create slide deck: artifact_type=slide_deck, confirm=True
+27. Create mind map: artifact_type=mind_map, title="AI Concepts", confirm=True
+28. Download report: artifact_type=report, output_path=/tmp/report.md
+29. Download flashcards: artifact_type=flashcards, output_path=/tmp/cards.json
+30. Get share status for notebook [id]
+31. Enable public link for notebook [id]
+32. Check deep research status
+33. Import deep research sources
+34. Create note in notebook [id]: content="Test note", title="My Note"
+35. List all notes in notebook [id]
+36. Update note [note_id] in notebook [id]: content="Updated content"
+37. Delete note [note_id] in notebook [id] with confirm=True
+38. Delete all studio artifacts with confirm=True
+39. Delete all sources with confirm=True
+40. Delete notebook [id] with confirm=True
+```
